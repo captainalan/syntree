@@ -5,6 +5,8 @@
 //
 // MIT license
 
+'use strict';
+
 const debug = true;
 const margin = 15; // Number of pixels from tree to edge on each side.
 const padding_above_text = 6; // Lines will end this many pixels above text.
@@ -260,7 +262,8 @@ class Node {
     }
 
     /**
-     * Return 
+     * Returns intervening height. 
+     * @param {boolean} leftwards - Direction of branches on the left.
      */
     find_intervening_height(leftwards) {
 	let max_y = this.y;
@@ -283,15 +286,15 @@ class Node {
 
 /**
  * Represents the movement of a node in a syntactic tree
- * @param {TODO} head - TODO
- * @param {TODO} tail - TODO
- * @param {TODO} lca - TODO
- * @param {TODO} dest_x - TODO
- * @param {TODO} dest_y - TODO
- * @param {TODO} bottom_y - TODO
- * @param {TODO} max_y - TODO
- * @param {TODO} should_draw - TODO
- * @param {TODO} leftwards - TODO
+ * @param {Node} head - Head Node to draw movement line from.
+ * @param {Node} tail - Tail Node to draw movement line to.
+ * @param {Node} lca - Last common ancestor.
+ * @param {number} dest_x - X-coordinate of head.
+ * @param {number} dest_y - Y-coordinate of head. 
+ * @param {number} bottom_y - Bottom Y-axis value of movement line
+ * @param {number} max_y - Maximum Y-axis value of movement line
+ * @param {boolean} should_draw - Whether or not all necessary parameters provided. 
+ * @param {boolean} leftwards - Direction of branches on the left.
  */
 class MovementLine {
     constructor(head=null, tail=null, lca=null, dest_x=null, dest_y=null,
@@ -308,7 +311,7 @@ class MovementLine {
     }
 
     /**
-     * INSERT DESCRIPTION
+     * Set up movement lines.
      */
     set_up() {
 	this.should_draw = 0;
@@ -332,7 +335,7 @@ class MovementLine {
     }
 
     /**
-     * INSERT DESCRIPTION
+     * Check to see if head is parent of tail
      */
     check_head() {
 	let n = this.tail;
@@ -346,7 +349,7 @@ class MovementLine {
     }
 
     /**
-     * INSERT DESCRIPTION
+     * Find last common ancestor
      */
     find_lca() {
 	let n = this.head;
@@ -363,7 +366,7 @@ class MovementLine {
     }
 
     /**
-     * INSERT DESCRIPTION
+     * Find intervening height between head and tail
      */
     find_intervening_height() {
 	for (let child = this.lca.first; child != null; child = child.next) {
@@ -380,7 +383,8 @@ class MovementLine {
     }
 
     /**
-     * INSERT DESCRIPTION
+     * Draw movement line
+     * @param {CanvasRenderingContext2D} ctx - 2D rendering context.
      */
     draw(ctx) {
 	let tail_x = this.tail.x + 3;
@@ -410,14 +414,15 @@ class MovementLine {
 
 
 /**
- * Main function that calls functions to actually draw syntactic tree.
+ * Main function that calls other functions to actually draw syntactic
+ * tree, including movement lines, if any.
  * @param {string} str - Bracketed string representation of a sentence.
- * @param {TODO} font_size
- * @param {TODO} term_font
- * @param {TODO} nonterm_font
- * @param {TODO} vert_space
- * @param {TODO} hor_space
- * @param {TODO} color
+ * @param {number} font_size - Font size.
+ * @param {string} term_font - Font for terminal node.
+ * @param {string} nonterm_font - Font for nonterminal node.
+ * @param {number} vert_space - Vertical space.
+ * @param {number} hor_space - Horizontal space.
+ * @param {string} color - Color.
  * @param {boolean} term_lines - Display lines to terminal nodes.
  */
 function go(str, font_size, term_font, nonterm_font, vert_space, hor_space,
