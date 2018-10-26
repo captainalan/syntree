@@ -1,19 +1,22 @@
 ﻿// By Miles Shang <mail@mshang.ca>
+// Converted to ES6 by Alan Wong <captainalan@gmail.com>
 // MIT license
 
-var debug = true;
-var margin = 15; // Number of pixels from tree to edge on each side.
-var padding_above_text = 6; // Lines will end this many pixels above text.
-var padding_below_text = 6;
+const debug = true;
+const margin = 15; // Number of pixels from tree to edge on each side.
+const padding_above_text = 6; // Lines will end this many pixels above text.
+const padding_below_text = 6;
 
-function Node() {
+class Node {
+
+    constructor() {
 	this.value = null;
 	this.step = null; // Horizontal distance between children.
 	this.draw_triangle = null;
 	this.label = null; // Head of movement.
 	this.tail = null; // Tail of movement.
 	this.max_y = null; // Distance of the descendent of this node that is farthest from root.
-	this.children = new Array();
+	this.children = [];
 	this.has_children;
 	this.first = null;
 	this.last = null;
@@ -25,10 +28,10 @@ function Node() {
 	this.head_chain = null;
 	this.tail_chain = null;
 	this.starred = null;
-}
+    }
 
-Node.prototype.set_siblings = function(parent) {
-	for (var i = 0; i < this.children.length; i++)
+    set_siblings(parent) {
+	for (let i = 0; i < this.children.length; i++)
 		this.children[i].set_siblings(this);
 	
 	this.has_children = (this.children.length > 0);
@@ -39,30 +42,30 @@ Node.prototype.set_siblings = function(parent) {
 		this.last = this.children[this.children.length - 1];
 	}
 	
-	for (var i = 0; i < this.children.length - 1; i++)
+	for (let i = 0; i < this.children.length - 1; i++)
 		this.children[i].next = this.children[i+1];
 	
-	for (var i = 1; i < this.children.length; i++)
+	for (let i = 1; i < this.children.length; i++)
 		this.children[i].previous = this.children[i-1];
-}
+    }
 
-Node.prototype.check_triangle = function() {
+    check_triangle() {
 	this.draw_triangle = 0;
 	if ((!this.has_children) && (this.parent.starred))
 		this.draw_triangle = 1;
 
-	for (var child = this.first; child != null; child = child.next)
+	for (let child = this.first; child != null; child = child.next)
 		child.check_triangle();
-}
+    }
 
-Node.prototype.set_width = function(ctx, vert_space, hor_space, term_font, nonterm_font) {
+    set_width(ctx, vert_space, hor_space, term_font, nonterm_font) {
 	ctx.font = term_font;
 	if (this.has_children)
 		ctx.font = nonterm_font;
 
-	var val_width = ctx.measureText(this.value).width;
+	let val_width = ctx.measureText(this.value).width;
 
-	for (var child = this.first; child != null; child = child.next)
+	for (let child = this.first; child != null; child = child.next)
 		child.set_width(ctx, vert_space, hor_space, term_font, nonterm_font);
 	
 	if (!this.has_children) {
@@ -74,8 +77,8 @@ Node.prototype.set_width = function(ctx, vert_space, hor_space, term_font, nonte
 	// Figure out how wide apart the children should be placed.
 	// The spacing between them should be equal.
 	this.step = 0;
-	for (var child = this.first; (child != null) && (child.next != null); child = child.next) {
-		var space = child.right_width + hor_space + child.next.left_width;
+	for (let child = this.first; (child != null) && (child.next != null); child = child.next) {
+		let space = child.right_width + hor_space + child.next.left_width;
 		this.step = Math.max(this.step, space);
 	}
 	
@@ -83,39 +86,38 @@ Node.prototype.set_width = function(ctx, vert_space, hor_space, term_font, nonte
 	this.right_width = 0.0;
 	
 	if (this.has_children) {
-		var sub = ((this.children.length - 1) / 2) * this.step;
+		let sub = ((this.children.length - 1) / 2) * this.step;
 		this.left_width = sub + this.first.left_width;
 		this.right_width = sub + this.last.right_width;
 	}
 	
 	this.left_width = Math.max(this.left_width, val_width / 2);
 	this.right_width = Math.max(this.right_width, val_width / 2);
+    }
 
-}
-
-Node.prototype.find_height = function() {
+    find_height() {
 	this.max_y = this.y;
-	for (var child = this.first; child != null; child = child.next)
+	for (let child = this.first; child != null; child = child.next)
 		this.max_y = Math.max(this.max_y, child.find_height());
 	return this.max_y;
-}
+    }
 
-Node.prototype.assign_location = function(x, y, font_size, term_lines) {
+    assign_location(x, y, font_size, term_lines) {
 	// floor + 0.5 for antialiasing
 	this.x = Math.floor(x) + 0.5;
 	this.y = Math.floor(y) + 0.5;
 	
 	if (this.has_children) {
-		var left_start = x - (this.step)*((this.children.length-1)/2);
-		for (var i = 0; i < this.children.length; i++)
+		let left_start = x - (this.step)*((this.children.length-1)/2);
+		for (let i = 0; i < this.children.length; i++)
 			this.children[i].assign_location(left_start + i*(this.step), y + vert_space, font_size, term_lines);
 	} else {
 		if ((this.parent) && (!term_lines) && (this.parent.children.length == 1) && (!this.draw_triangle))
 			this.y = this.parent.y + padding_above_text + padding_below_text + font_size;
 	}
-}
+    }
 
-Node.prototype.draw = function(ctx, font_size, term_font, nonterm_font, color, term_lines) {
+    draw(ctx, font_size, term_font, nonterm_font, color, term_lines) {
 	ctx.font = term_font;
 	if (this.has_children)
 		ctx.font = nonterm_font;
@@ -128,7 +130,7 @@ Node.prototype.draw = function(ctx, font_size, term_font, nonterm_font, color, t
 	}
 	
 	ctx.fillText(this.value, this.x, this.y);
-	for (var child = this.first; child != null; child = child.next)
+	for (let child = this.first; child != null; child = child.next)
 		child.draw(ctx, font_size, term_font, nonterm_font, color, term_lines);
 	
 	if (!this.parent) return;
@@ -147,42 +149,42 @@ Node.prototype.draw = function(ctx, font_size, term_font, nonterm_font, color, t
 	ctx.moveTo(this.parent.x, this.parent.y + padding_below_text);
 	ctx.lineTo(this.x, this.y - font_size - padding_above_text);
 	ctx.stroke();
-}
+    }
 
-Node.prototype.find_head = function(label) {
-	for (var child = this.first; child != null; child = child.next) {
-		var res = child.find_head(label);
+    find_head(label) {
+	for (let child = this.first; child != null; child = child.next) {
+		let res = child.find_head(label);
 		if (res != null) return res;
 	}
 	
 	if (this.label == label) return this;
 	return null;
-}
+    }
 
-Node.prototype.find_movement = function(mlarr, root) {
-	for (var child = this.first; child != null; child = child.next)
+    find_movement(mlarr, root) {
+	for (let child = this.first; child != null; child = child.next)
 		child.find_movement(mlarr, root);
 	
 	if (this.tail != null) {
-		var m = new MovementLine;
+		let m = new MovementLine;
 		m.tail = this;
 		m.head = root.find_head(this.tail);
 		mlarr.push(m);
 	}
-}
+    }
 
-Node.prototype.reset_chains = function() {
+    reset_chains() {
 	this.head_chain = null;
 	this.tail_chain = null;
 	
-	for (var child = this.first; child != null; child = child.next)
+	for (let child = this.first; child != null; child = child.next)
 		child.reset_chains();
-}
+    }
 
-Node.prototype.find_intervening_height = function(leftwards) {
-	var max_y = this.y;
+    find_intervening_height(leftwards) {
+	let max_y = this.y;
 	
-	var n = this;
+	let n = this;
 	while (true) {
 		if (leftwards) {n = n.previous;} else {n = n.next;}
 		if (!n) break;
@@ -193,9 +195,13 @@ Node.prototype.find_intervening_height = function(leftwards) {
 	max_y = Math.max(max_y, 
 		this.parent.find_intervening_height(leftwards));
 	return max_y;
+    }   
+
+
 }
 
-function MovementLine() {
+class MovementLine {
+    constructor() {
 	this.head = null;
 	this.tail = null;
 	this.lca = null;
@@ -205,9 +211,9 @@ function MovementLine() {
 	this.max_y = null;
 	this.should_draw = null;
 	this.leftwards = null;
-}
+    }
 
-MovementLine.prototype.set_up = function() {
+    set_up() {
 	this.should_draw = 0;
 	if ((this.tail == null) || (this.head == null)) return;
 	
@@ -226,10 +232,10 @@ MovementLine.prototype.set_up = function() {
 	this.bottom_y = this.max_y + vert_space;
 	this.should_draw = 1;
 	return;
-}
+    }
 
-MovementLine.prototype.check_head = function() {
-	var n = this.tail;
+    check_head() {
+	let n = this.tail;
 	n.tail_chain = 1;
 	while (n.parent != null) {
 		n = n.parent;
@@ -237,10 +243,10 @@ MovementLine.prototype.check_head = function() {
 		n.tail_chain = 1;
 	}
 	return 1;
-}
+    }
 
-MovementLine.prototype.find_lca = function() {
-	var n = this.head;
+    find_lca() {
+	let n = this.head;
 	n.head_chain = 1;
 	this.lca = null;
 	while (n.parent != null) {
@@ -251,10 +257,10 @@ MovementLine.prototype.find_lca = function() {
 			break;
 		}
 	}
-}
+    }
 
-MovementLine.prototype.find_intervening_height = function() {
-	for (var child = this.lca.first; child != null; child = child.next) {
+    find_intervening_height() {
+	for (let child = this.lca.first; child != null; child = child.next) {
 		if ((child.head_chain) || (child.tail_chain)) {
 			this.leftwards = false;
 			if (child.head_chain) this.leftwards = true;
@@ -265,10 +271,10 @@ MovementLine.prototype.find_intervening_height = function() {
 	this.max_y = Math.max(this.tail.find_intervening_height( this.leftwards), 
 	                      this.head.find_intervening_height(!this.leftwards),
 						  this.head.max_y);
-}
+    }
 
-MovementLine.prototype.draw = function(ctx) {
-	var tail_x = this.tail.x + 3;
+    draw(ctx) {
+	let tail_x = this.tail.x + 3;
 	this.dest_x -= 3;
 	if (this.leftwards) {
 		tail_x -= 6;
@@ -287,13 +293,16 @@ MovementLine.prototype.draw = function(ctx) {
 	ctx.closePath();
 	ctx.fillStyle = "#000000";
 	ctx.fill();
+    }
 }
+
+
 
 function go(str, font_size, term_font, nonterm_font, vert_space, hor_space, color, term_lines) {	
 	// Clean up the string
 	str = str.replace(/^\s+/, "");
-	var open = 0;
-	for (var i = 0; i < str.length; i++) {
+	let open = 0;
+	for (let i = 0; i < str.length; i++) {
 		if (str[i] == "[") open++;
 		if (str[i] == "]") open--;
 	}
@@ -306,12 +315,12 @@ function go(str, font_size, term_font, nonterm_font, vert_space, hor_space, colo
 		open--;
 	}
 	
-	var root = parse(str);
+	let root = parse(str);
 	root.set_siblings(null);
 	root.check_triangle();
 	
-	var canvas;
-	var ctx;
+	let canvas;
+	let ctx;
 	
 	try {
 		// Make a new canvas. Required for IE compatability.
@@ -326,18 +335,18 @@ function go(str, font_size, term_font, nonterm_font, vert_space, hor_space, colo
 	root.assign_location(0, 0, font_size, term_lines);
 	root.find_height();
 	
-	var movement_lines = new Array();
+	let movement_lines = [];
 	root.find_movement(movement_lines, root);
-	for (var i = 0; i < movement_lines.length; i++) {
+	for (let i = 0; i < movement_lines.length; i++) {
 		root.reset_chains();
 		movement_lines[i].set_up();
 	}
 	
 	// Set up the canvas.
-	var width = root.left_width + root.right_width + 2 * margin;
-	var height = root.max_y + font_size + 2 * margin;
+	let width = root.left_width + root.right_width + 2 * margin;
+	let height = root.max_y + font_size + 2 * margin;
 	// Problem: movement lines may protrude from bottom.
-	for (var i = 0; i < movement_lines.length; i++)
+	for (let i = 0; i < movement_lines.length; i++)
 		if (movement_lines[i].max_y == root.max_y) {
 			height += vert_space; break;
 		}
@@ -349,12 +358,12 @@ function go(str, font_size, term_font, nonterm_font, vert_space, hor_space, colo
 	ctx.fillRect(0, 0, width, height);
 	ctx.fillStyle = "rgb(0, 0, 0)";
 	ctx.textAlign = "center";
-	var x_shift = Math.floor(root.left_width + margin);
-	var y_shift = Math.floor(font_size + margin);
+	let x_shift = Math.floor(root.left_width + margin);
+	let y_shift = Math.floor(font_size + margin);
 	ctx.translate(x_shift, y_shift);
 	
 	root.draw(ctx, font_size, term_font, nonterm_font, color, term_lines);
-	for (var i = 0; i < movement_lines.length; i++)
+	for (let i = 0; i < movement_lines.length; i++)
 		if (movement_lines[i].should_draw) movement_lines[i].draw(ctx);
 	
 	// Swap out the image
@@ -362,8 +371,8 @@ function go(str, font_size, term_font, nonterm_font, vert_space, hor_space, colo
 }
 
 function subscriptify(in_str) {
-	var out_str = "";
-	for (var i = 0; i < in_str.length; ++i) {
+	let out_str = "";
+	for (let i = 0; i < in_str.length; ++i) {
 		switch (in_str[i]) {
 		case "0": out_str = out_str + "₀"; break;
 		case "1": out_str = out_str + "₁"; break;
@@ -381,7 +390,7 @@ function subscriptify(in_str) {
 }
 
 function parse(str) {
-	var n = new Node();
+	let n = new Node();
 	
 	if (str[0] != "[") { // Text node
 		// Get any movement information.
@@ -397,7 +406,7 @@ function parse(str) {
 		return n;
 	}
 
-	var i = 1;
+	let i = 1;
 	while ((str[i] != " ") && (str[i] != "[") && (str[i] != "]")) i++;
 	n.value = str.substr(1, i-1)
 	n.value = n.value.replace(/\^/, 
@@ -415,10 +424,10 @@ function parse(str) {
 	
 	while (str[i] == " ") i++;
 	if (str[i] != "]") {
-		var level = 1;
-		var start = i;
+		let level = 1;
+		let start = i;
 		for (; i < str.length; i++) {
-			var temp = level;
+			let temp = level;
 			if (str[i] == "[") level++;
 			if (str[i] == "]") level--;
 			if (((temp == 1) && (level == 2)) || ((temp == 1) && (level == 0))) {
